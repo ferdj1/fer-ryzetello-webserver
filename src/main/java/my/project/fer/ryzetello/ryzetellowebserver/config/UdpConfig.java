@@ -27,7 +27,7 @@ public class UdpConfig {
     @Autowired
     public UdpConfig() throws SocketException, UnknownHostException {
         // TODO FIX
-        this.host = "localhost";
+        this.host = "40.115.62.3";
         this.port = 50000;
 
         this.serverSocket = serverSocket();
