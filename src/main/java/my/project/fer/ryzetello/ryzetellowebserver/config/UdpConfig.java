@@ -28,7 +28,7 @@ public class UdpConfig {
     public UdpConfig() throws SocketException, UnknownHostException {
         // TODO FIX
         this.host = "localhost";
-        this.port = 5432;
+        this.port = 50000;
 
         this.serverSocket = serverSocket();
     }
