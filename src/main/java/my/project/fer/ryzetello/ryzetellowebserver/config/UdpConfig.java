@@ -27,7 +27,7 @@ public class UdpConfig {
     @Autowired
     public UdpConfig() throws SocketException, UnknownHostException {
         // TODO FIX
-        this.host = "40.115.62.3";
+        //this.host = "40.115.62.3";
         this.port = 50000;
 
         this.serverSocket = serverSocket();
@@ -35,7 +35,7 @@ public class UdpConfig {
 
     public DatagramSocket serverSocket() throws UnknownHostException, SocketException {
         if (serverSocket == null) {
-            serverSocket = new DatagramSocket(port, InetAddress.getByName(host));
+            serverSocket = new DatagramSocket(port);
             LOGGER.info("Created new server socket instance.");
         }
 
