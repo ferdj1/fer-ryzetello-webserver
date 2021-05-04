@@ -3,10 +3,6 @@ package my.project.fer.ryzetello.ryzetellowebserver.udp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.integration.annotation.ServiceActivator;
-import org.springframework.integration.ip.udp.UnicastSendingMessageHandler;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -50,19 +46,7 @@ public class UdpSenderServiceImpl implements UdpSenderService {
             LOGGER.info("Sent message '{}' to {}:{}\n", message, host, port);
         } catch (IOException e) {
             LOGGER.error("Error while sending message.");
-            return;
         }
     }
-
-    /*@ServiceActivator
-    public void receiveMessage(Message message) {
-        String ip = message.getHeaders().get(IP_ADDRESS).toString();
-        int port = (int) message.getHeaders().get(PORT);
-        String data = new String((byte[]) message.getPayload());
-
-        LOGGER.info("Received message '{}' from {}:{}\n", data, ip, port);
-
-        sendMessage(ip, port, "Sending message back!");
-    }*/
 
 }

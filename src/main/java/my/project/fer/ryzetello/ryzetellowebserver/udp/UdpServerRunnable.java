@@ -1,15 +1,15 @@
 package my.project.fer.ryzetello.ryzetellowebserver.udp;
 
-import my.project.fer.ryzetello.ryzetellowebserver.endpoint.EndpointData;
 import my.project.fer.ryzetello.ryzetellowebserver.config.UdpConfig;
 import my.project.fer.ryzetello.ryzetellowebserver.constants.MessageConstants;
+import my.project.fer.ryzetello.ryzetellowebserver.model.Drone;
+import my.project.fer.ryzetello.ryzetellowebserver.service.DroneService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.DatagramPacket;
-import java.util.UUID;
 
 @Component
 public class UdpServerRunnable implements Runnable {
@@ -20,12 +20,12 @@ public class UdpServerRunnable implements Runnable {
     private byte[] sendBuffer = new byte[1024];
 
     private final UdpConfig udpConfig;
-    private final EndpointData endpointData;
+    private final DroneService droneService;
 
     @Autowired
-    public UdpServerRunnable(UdpConfig udpConfig) {
+    public UdpServerRunnable(UdpConfig udpConfig, DroneService droneService) {
         this.udpConfig = udpConfig;
-        this.endpointData = EndpointData.getInstance();
+        this.droneService = droneService;
     }
 
     @Override
@@ -38,11 +38,19 @@ public class UdpServerRunnable implements Runnable {
                 String receivedMessage = new String(receivePacket.getData()).replaceAll("\0", "");
                 LOGGER.info("Server received message: " + receivedMessage);
 
-                if (receivedMessage.startsWith(MessageConstants.REGISTER)) {
+                final String receivedDroneHost = receivePacket.getAddress().getHostAddress();
+                final Integer receivedDronePort = receivePacket.getPort();
+
+                if (receivedMessage.startsWith(MessageConstants.REGISTER)
+                    && !droneService.existsByHostAndPort(receivedDroneHost, receivedDronePort)) {
                     // Drone registration phase
-                    endpointData.setId(UUID.randomUUID().toString());
-                    endpointData.setIp(receivePacket.getAddress().getHostAddress());
-                    endpointData.setPort(receivePacket.getPort());
+                    final Drone newDrone = new Drone();
+                    newDrone.setHost(receivedDroneHost);
+                    newDrone.setPort(receivedDronePort);
+
+                    final Drone savedDrone = droneService.addDrone(newDrone);
+
+                    LOGGER.info("Registered drone: {}:{}, ID: {}.", receivedDroneHost, receivedDronePort, savedDrone.getId());
                 } else {
                     // TODO other cases if needed
                 }
@@ -51,7 +59,7 @@ public class UdpServerRunnable implements Runnable {
                 receiveBuffer = new byte[1024];
             }
         } catch (Exception e) {
-            LOGGER.error("Socket error.");
+            LOGGER.error("Socket error.", e);
         }
 
     }
