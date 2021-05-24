@@ -4,6 +4,7 @@ import my.project.fer.ryzetello.ryzetellowebserver.config.UdpConfig;
 import my.project.fer.ryzetello.ryzetellowebserver.constants.MessageConstants;
 import my.project.fer.ryzetello.ryzetellowebserver.model.Drone;
 import my.project.fer.ryzetello.ryzetellowebserver.service.DroneService;
+import my.project.fer.ryzetello.ryzetellowebserver.service.WebSocketService;
 import my.project.fer.ryzetello.ryzetellowebserver.state.HealthyDrones;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.DatagramPacket;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Component
 public class UdpServerRunnable implements Runnable {
@@ -22,12 +26,14 @@ public class UdpServerRunnable implements Runnable {
 
     private final UdpConfig udpConfig;
     private final DroneService droneService;
+    private final WebSocketService webSocketService;
     private final HealthyDrones healthyDrones;
 
     @Autowired
-    public UdpServerRunnable(UdpConfig udpConfig, DroneService droneService, HealthyDrones healthyDrones) {
+    public UdpServerRunnable(UdpConfig udpConfig, DroneService droneService, WebSocketService webSocketService, HealthyDrones healthyDrones) {
         this.udpConfig = udpConfig;
         this.droneService = droneService;
+        this.webSocketService = webSocketService;
         this.healthyDrones = healthyDrones;
     }
 
@@ -54,6 +60,12 @@ public class UdpServerRunnable implements Runnable {
 
                     final Drone savedDrone = droneService.addDrone(newDrone);
                     healthyDrones.addDrone(savedDrone.getId());
+
+                    // WS
+                    List<UUID> dronesAdded = new ArrayList<>();
+                    dronesAdded.add(savedDrone.getId());
+                    webSocketService.notifyDronesAdded(dronesAdded);
+                    //
 
                     LOGGER.info("Registered drone: {}:{}, ID: {}.", receivedDroneHost, receivedDronePort, savedDrone.getId());
                 } else if (receivedMessage.startsWith(MessageConstants.HEALTH_CHECK)){

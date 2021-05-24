@@ -3,6 +3,7 @@ package my.project.fer.ryzetello.ryzetellowebserver.scheduler;
 import my.project.fer.ryzetello.ryzetellowebserver.constants.MessageConstants;
 import my.project.fer.ryzetello.ryzetellowebserver.model.Drone;
 import my.project.fer.ryzetello.ryzetellowebserver.service.DroneService;
+import my.project.fer.ryzetello.ryzetellowebserver.service.WebSocketService;
 import my.project.fer.ryzetello.ryzetellowebserver.state.HealthyDrones;
 import my.project.fer.ryzetello.ryzetellowebserver.udp.UdpSenderService;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -22,12 +24,14 @@ public class HealthCheckScheduler {
 
     private final DroneService droneService;
     private final UdpSenderService udpSenderService;
+    private WebSocketService webSocketService;
     private final HealthyDrones healthyDrones;
 
     @Autowired
-    public HealthCheckScheduler(DroneService droneService, UdpSenderService udpSenderService, HealthyDrones healthyDrones) {
+    public HealthCheckScheduler(DroneService droneService, UdpSenderService udpSenderService, WebSocketService webSocketService, HealthyDrones healthyDrones) {
         this.droneService = droneService;
         this.udpSenderService = udpSenderService;
+        this.webSocketService = webSocketService;
         this.healthyDrones = healthyDrones;
     }
 
@@ -52,12 +56,21 @@ public class HealthCheckScheduler {
 
         int cleanedUpCount = 0;
 
+        List<UUID> deletedDrones = new ArrayList<>();
         for (UUID id : allDroneIds) {
             if (!healthyDrones.getHealthyDroneIds().contains(id)) {
                 droneService.deleteDrone(id);
                 cleanedUpCount++;
+                deletedDrones.add(id);
             }
         }
+
+        // WS
+        if (!deletedDrones.isEmpty()) {
+            webSocketService.notifyDronesRemoved(deletedDrones);
+        }
+        //
+
         LOGGER.info("Health check:: Cleaned up {} dead drones.", cleanedUpCount);
     }
 }

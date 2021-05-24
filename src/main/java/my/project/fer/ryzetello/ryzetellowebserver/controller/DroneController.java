@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/drones")
@@ -23,6 +25,11 @@ public class DroneController {
     @GetMapping
     public List<Drone> getAllDrones() {
         return droneService.getAll();
+    }
+
+    @GetMapping("/ids")
+    public List<UUID> getAllDroneIds() {
+        return droneService.getAll().stream().map(Drone::getId).collect(Collectors.toList());
     }
 
 }

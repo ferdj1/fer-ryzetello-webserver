@@ -15,4 +15,5 @@ udp:
     ${UDP_HOST:127.0.0.1}
   port:
     ${UDP_PORT:50000}
-
+  videoPort:
+    ${UDP_VIDEO_PORT:50010}
