@@ -47,6 +47,8 @@ public class UdpConfig {
     public DatagramSocket videoServerSocket() throws SocketException {
         if (videoServerSocket == null) {
             videoServerSocket = new DatagramSocket(videoPort);
+            videoServerSocket.setSendBufferSize(1460);
+            videoServerSocket.setReceiveBufferSize(1460);
             LOGGER.info("Created new video server socket instance.");
         }
 

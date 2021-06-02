@@ -17,3 +17,11 @@ udp:
     ${UDP_PORT:50000}
   videoPort:
     ${UDP_VIDEO_PORT:50010}
+
+tcp:
+  host:
+    ${TCP_HOST:127.0.0.1}
+  port:
+    ${TCP_PORT:50000}
+  videoPort:
+    ${TCP_VIDEO_PORT:50010}

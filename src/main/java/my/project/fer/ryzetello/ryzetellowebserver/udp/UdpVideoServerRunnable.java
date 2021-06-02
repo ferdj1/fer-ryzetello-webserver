@@ -55,14 +55,14 @@ public class UdpVideoServerRunnable implements Runnable {
                 // TODO remove temp stream
                 sendVideoBuffer = receivedVideoData;
                 DatagramPacket sendPacket = new DatagramPacket(sendVideoBuffer, sendVideoBuffer.length, InetAddress.getByName(udpConfig.getHost()),
-                    50505);
+                    41234);
                 udpConfig.videoServerSocket().send(sendPacket);
 
-                sendVideoBuffer = new byte[1024];
+                sendVideoBuffer = new byte[1460];
                 // TODO END
 
                 // Buffer cleanup
-                receiveVideoBuffer = new byte[1024];
+                receiveVideoBuffer = new byte[1460];
             }
         } catch (Exception e) {
             LOGGER.error("Socket error.", e);

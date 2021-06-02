@@ -37,7 +37,7 @@ public class HealthCheckScheduler {
 
     @Scheduled(fixedRate = 5000)
     public void healthCheck() {
-        cleanup();
+        /*cleanup();
 
         LOGGER.info("Health check:: Reseting healthy drones.");
         healthyDrones.reset();
@@ -46,7 +46,7 @@ public class HealthCheckScheduler {
 
         drones.forEach(drone -> {
             udpSenderService.sendMessage(drone.getHost(), drone.getPort(), MessageConstants.HEALTH_CHECK);
-        });
+        });*/
     }
 
     // Remove dead clients
