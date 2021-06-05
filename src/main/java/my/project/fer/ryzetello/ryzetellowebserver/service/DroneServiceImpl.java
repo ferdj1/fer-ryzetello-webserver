@@ -47,6 +47,17 @@ public class DroneServiceImpl implements DroneService {
     }
 
     @Override
+    public UUID getIdByHostAndPort(String host, Integer port) {
+        final Optional<Drone> droneOptional = droneRepository.findFirstByHostAndPort(host, port);
+
+        if (!droneOptional.isPresent()) {
+            throw new EntryNotFoundException("Drone not found.");
+        }
+
+        return droneOptional.get().getId();
+    }
+
+    @Override
     public boolean existsById(UUID id) {
         return droneRepository.existsById(id);
     }

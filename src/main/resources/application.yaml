@@ -25,3 +25,13 @@ tcp:
     ${TCP_PORT:50000}
   videoPort:
     ${TCP_VIDEO_PORT:50010}
+
+ffmpeg:
+  ffmpegPath: ${FFMPEG_PATH:C:/ffmpeg/ffmpeg.exe}
+  ffprobePath: ${FFPROBE_PATH:C:/ffmpeg/ffprobe.exe}
+
+node:
+  nodePath: ${NODE_PATH:C:/Program Files/nodejs/node.exe}
+
+jsmpeg:
+  webSocketRelayPath: ${WEB_SOCKET_RELAY_PATH:C:/jsmpeg/websocket-relay.js}

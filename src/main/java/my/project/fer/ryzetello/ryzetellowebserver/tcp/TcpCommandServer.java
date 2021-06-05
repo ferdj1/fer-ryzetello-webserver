@@ -6,6 +6,9 @@ import my.project.fer.ryzetello.ryzetellowebserver.model.Drone;
 import my.project.fer.ryzetello.ryzetellowebserver.service.DroneService;
 import my.project.fer.ryzetello.ryzetellowebserver.service.WebSocketService;
 import my.project.fer.ryzetello.ryzetellowebserver.state.HealthyDrones;
+import my.project.fer.ryzetello.ryzetellowebserver.state.VideoClientExecutorsState;
+import my.project.fer.ryzetello.ryzetellowebserver.state.VideoClientsState;
+import my.project.fer.ryzetello.ryzetellowebserver.udp.UdpVideoMultiServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -44,6 +47,12 @@ public class TcpCommandServer implements Runnable {
 
     private final HealthyDrones healthyDrones;
 
+    private final VideoClientsState videoClientsState;
+
+    private final VideoClientExecutorsState videoClientExecutorsState;
+
+    private UdpVideoMultiServer udpVideoMultiServer;
+
     private ExecutorService executorService;
 
     private ExecutorService serverExecutorService;
@@ -53,11 +62,17 @@ public class TcpCommandServer implements Runnable {
     public TcpCommandServer(TcpConfig tcpConfig,
         DroneService droneService,
         WebSocketService webSocketService,
-        HealthyDrones healthyDrones) throws IOException {
+        HealthyDrones healthyDrones,
+        VideoClientsState videoClientsState,
+        VideoClientExecutorsState videoClientExecutorsState,
+        UdpVideoMultiServer udpVideoMultiServer) throws IOException {
         this.tcpConfig = tcpConfig;
         this.droneService = droneService;
         this.webSocketService = webSocketService;
         this.healthyDrones = healthyDrones;
+        this.videoClientsState = videoClientsState;
+        this.videoClientExecutorsState = videoClientExecutorsState;
+        this.udpVideoMultiServer = udpVideoMultiServer;
         this.executorService = Executors.newFixedThreadPool(ALLOWED_CLIENTS_COUNT);
         this.serverExecutorService = Executors.newFixedThreadPool(1);
         this.serverSocket = new ServerSocket(tcpConfig.getPort());
@@ -88,6 +103,10 @@ public class TcpCommandServer implements Runnable {
         private PrintWriter out;
         private BufferedReader in;
 
+        private UUID droneId;
+        private String host;
+        private int port;
+
         public TcpCommandClientHandler(Socket socket) {
             this.clientSocket = socket;
 
@@ -109,16 +128,38 @@ public class TcpCommandServer implements Runnable {
                 webSocketService.notifyDronesAdded(dronesAdded);
                 //
 
-                LOGGER.info("Registered drone: {}:{}, ID: {}.", receivedDroneHost, receivedDronePort,
-                    savedDrone.getId());
+                // Create UDP video and ffmpeg port for drone
+                videoClientsState.setVideoAndFffmpegPortsForDroneId(savedDrone.getId());
+
+                // Save info
+                this.droneId = savedDrone.getId();
+                this.host = savedDrone.getHost();
+                this.port = savedDrone.getPort();
+
+                LOGGER.info("Registered drone: {}:{}, ID: {}.", receivedDroneHost, receivedDronePort, savedDrone.getId());
             }
         }
 
         @Override
         public void run() {
+            UdpVideoMultiServer.UdpVideoClientHandler udpVideoClientHandler = null;
+
             try {
                 out = new PrintWriter(clientSocket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+                // Send UDP video port to drone
+                Integer droneVideoPort = videoClientsState.getVideoPort(droneId);
+
+                if (droneVideoPort != null) {
+                    out.println("ASSIGNED_VIDEO_PORT:" + videoClientsState.getVideoPort(droneId));
+
+                    ExecutorService videoClientExecutorService = Executors.newFixedThreadPool(1);
+                    videoClientExecutorsState.add(droneId, videoClientExecutorService);
+                    udpVideoClientHandler = udpVideoMultiServer.getVideoClientHandlerInstance(droneId, host, port);
+                    videoClientExecutorService.submit(udpVideoClientHandler);
+                }
+                //
 
                 String receivedMessage;
                 while ((receivedMessage = in.readLine()) != null) {
@@ -153,10 +194,23 @@ public class TcpCommandServer implements Runnable {
                 removeDrone(clientSocket);
                 clientSocket.close();
 
+                if (udpVideoClientHandler != null) {
+                    udpVideoClientHandler.getFfmpegProcess().destroyForcibly();
+                    udpVideoClientHandler.getWebSocketRelayProcess().destroyForcibly();
+                }
+
             } catch (Exception e) {
                 LOGGER.error("Socket error.", e);
 
                 removeDrone(clientSocket);
+
+                if (udpVideoClientHandler != null) {
+                    udpVideoClientHandler.getFfmpegProcess().destroyForcibly();
+                    udpVideoClientHandler.getWebSocketRelayProcess().destroyForcibly();
+                }
+
+                videoClientsState.removeAllPortsForDroneId(droneId);
+                videoClientExecutorsState.getForId(droneId).shutdown();
             }
         }
 

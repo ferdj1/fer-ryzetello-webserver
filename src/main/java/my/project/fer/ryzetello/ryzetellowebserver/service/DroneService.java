@@ -13,6 +13,8 @@ public interface DroneService {
 
     Drone getByHostAndPort(String host, Integer port);
 
+    UUID getIdByHostAndPort(String host, Integer port);
+
     boolean existsById(UUID id);
 
     boolean existsByHostAndPort(String host, Integer port);
