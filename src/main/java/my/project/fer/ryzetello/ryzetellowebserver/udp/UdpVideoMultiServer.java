@@ -79,7 +79,7 @@ public class UdpVideoMultiServer {
                     try {
                         String command = ffmpegConfig.getFfmpegPath();
                         LOGGER.info("Executing ffmpeg command.");
-                        ProcessBuilder processBuilder = new ProcessBuilder(command, "-framerate", "25", "-i", "udp://0.0.0.0:" + videoClientsState.getFfmpegPort(droneId), "-f", "mpegts", "-codec:v", "mpeg1video", "-s", "640x480", "-b:v", "1000k", "-bf", "0", "http://localhost:" + videoClientsState.getHttpStreamPort(droneId) + "/supersecret");
+                        ProcessBuilder processBuilder = new ProcessBuilder(command, "-framerate", "25", "-i", "udp://0.0.0.0:" + videoClientsState.getFfmpegPort(droneId), "-f", "mpegts", "-codec:v", "mpeg1video", "-s", "640x480", "-b:v", "1000k", "-bf", "0", "http://" + udpConfig.getHost() + ":" + videoClientsState.getHttpStreamPort(droneId) + "/supersecret");
                         processBuilder.inheritIO();
                         ffmpegProcess = processBuilder.start();
                         ffmpegProcess.waitFor();
