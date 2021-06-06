@@ -180,10 +180,16 @@ public class TcpCommandServer implements Runnable {
 
                         // Health check case 2: RaspPi ok, Drone down
                         if (receivedMessage.startsWith(MessageConstants.HEALTH_CHECK_DRONE_OFFLINE)) {
-                            // TODO: Add some flag? Keep it in healthy for now.
-                            final Drone droneByHostAndPort =
-                                droneService.getByHostAndPort(receivedDroneHost, receivedDronePort);
-                            healthyDrones.addDrone(droneByHostAndPort.getId());
+                            removeDrone(clientSocket);
+                            clientSocket.close();
+
+                            if (udpVideoClientHandler != null) {
+                                udpVideoClientHandler.getFfmpegProcess().destroyForcibly();
+                                udpVideoClientHandler.getWebSocketRelayProcess().destroyForcibly();
+                            }
+
+                            videoClientsState.removeAllPortsForDroneId(droneId);
+                            videoClientExecutorsState.getForId(droneId).shutdown();
                         }
 
                     } else {
