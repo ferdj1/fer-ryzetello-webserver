@@ -234,6 +234,8 @@ public class TcpCommandServer implements Runnable {
         UUID droneToRemove = droneService.getByHostAndPort(clientSocket.getInetAddress().getHostAddress(),
             clientSocket.getPort()).getId();
 
+        droneService.deleteDrone(droneToRemove);
+
         List<UUID> deletedDrones = new ArrayList<>();
         deletedDrones.add(droneToRemove);
 
